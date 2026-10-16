@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OT / SCADA Control Panel - PT Industri Otomasi Sejahtera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --ind-bg: #0b0f19;
+            --ind-panel: #111827;
+            --ind-panel-alt: #161f33;
+            --ind-border: #243049;
+            --ind-cyan: #06b6d4;
+            --ind-amber: #f59e0b;
+            --ind-emerald: #10b981;
+        }
+        body {
+            background-color: var(--ind-bg);
+            background-image: 
+                radial-gradient(circle at 10% 15%, rgba(6, 182, 212, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 90% 85%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
+            color: #e2e8f0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar-industrial {
+            background-color: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid var(--ind-border);
+        }
+        .brand-badge {
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        .card-industrial {
+            background-color: var(--ind-panel);
+            border: 1px solid var(--ind-border);
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        .card-industrial-header {
+            background-color: var(--ind-panel-alt);
+            border-bottom: 1px solid var(--ind-border);
+            padding: 0.9rem 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            font-size: 0.82rem;
+            color: #94a3b8;
+        }
+        .mono-text {
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .gauge-value {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .form-control-industrial {
+            background-color: #090d16;
+            border: 1px solid var(--ind-border);
+            color: #f8fafc;
+        }
+        .form-control-industrial:focus {
+            background-color: #090d16;
+            border-color: #06b6d4;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.2);
+        }
+        .btn-industrial-primary {
+            background: linear-gradient(135deg, #0891b2, #0284c7);
+            border: 1px solid #38bdf8;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .btn-industrial-primary:hover {
+            background: linear-gradient(135deg, #06b6d4, #0369a1);
+            color: #ffffff;
+        }
+        .btn-industrial-warning {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            border: 1px solid #fbbf24;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .btn-industrial-warning:hover {
+            background: linear-gradient(135deg, #f59e0b, #92400e);
+            color: #ffffff;
+        }
+        .terminal-box {
+            background-color: #05080f;
+            border: 1px solid #1e293b;
+            border-left: 4px solid #10b981;
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            color: #34d399;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+            background-color: var(--ind-emerald);
+            box-shadow: 0 0 8px var(--ind-emerald);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-industrial py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-3 text-light text-decoration-none" href="/">
+                <span class="brand-badge">
+                    <i class="bi bi-cpu-fill fs-5"></i>
+                </span>
+                <div>
+                    <div class="fw-bold fs-6">SCADA SUPERVISORY CONTROL PANEL</div>
+                    <div class="text-secondary" style="font-size: 0.75rem;">PT Industri Otomasi Sejahtera &bull; Plant Cikampek-01</div>
+                </div>
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2 mono-text">
+                    <i class="bi bi-check2-circle me-1"></i> GATEWAY LINKED
+                </span>
+                <a href="/logout" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-power me-1"></i> Putuskan Sesi
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container my-4 flex-grow-1">
+        {% if not scada_authenticated %}
+        <!-- SCADA Override Login Modal & Locked Panel -->
+        <div class="row justify-content-center my-4">
+            <div class="col-lg-8">
+                <div class="card-industrial border-warning border-opacity-50">
+                    <div class="card-industrial-header d-flex justify-content-between align-items-center">
+                        <span class="text-warning"><i class="bi bi-exclamation-octagon-fill me-2"></i>Konsol HMI / SCADA Terkunci</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 mono-text">OVERRIDE REQUIRED</span>
+                    </div>
+                    <div class="p-4 text-center">
+                        <p class="text-secondary mb-3">
+                            Koneksi ke <strong>IoT Gateway Node #IOS-9912</strong> telah terjalin. Untuk membuka antarmuka 
+                            telemetri mesin dan kendali pembaruan sensor, diperlukan kredensial operator pada jendela 
+                            <strong>SCADA Override Login</strong>.
+                        </p>
+                        <button type="button" class="btn btn-industrial-warning px-4" data-bs-toggle="modal" data-bs-target="#scadaOverrideModal">
+                            <i class="bi bi-shield-shaded me-2"></i>Buka SCADA Override Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bootstrap Modal for SCADA Override Login -->
+        <div class="modal fade show" id="scadaOverrideModal" tabindex="-1" aria-labelledby="scadaOverrideModalLabel" aria-modal="true" role="dialog" style="display: block; background-color: rgba(5, 8, 15, 0.82);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content card-industrial border-warning border-opacity-50">
+                    <div class="modal-header border-bottom border-secondary border-opacity-25" style="background-color: var(--ind-panel-alt);">
+                        <h2 class="modal-title h6 fw-bold text-uppercase text-warning mb-0" id="scadaOverrideModalLabel">
+                            <i class="bi bi-sliders2-vertical me-2"></i>SCADA Override Login
+                        </h2>
+                        <span class="badge bg-dark border border-secondary text-secondary mono-text">PLC-HMI v4.2</span>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="small text-secondary mb-3">
+                            Masukkan kredensial operator lokal untuk membuka akses langsung ke panel kontrol SCADA dan manajemen sensor pabrik.
+                        </p>
+
+                        {% if override_error %}
+                        <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-50 text-danger small d-flex align-items-center gap-2 mb-3" role="alert">
+                            <i class="bi bi-x-octagon-fill fs-5"></i>
+                            <div>{{ override_error }}</div>
+                        </div>
+                        {% endif %}
+
+                        <form method="POST" action="/scada-panel" autocomplete="off">
+                            <input type="hidden" name="action" value="scada_override">
+                            <div class="mb-3">
+                                <label for="username" class="form-label small fw-semibold text-uppercase text-secondary">Username Operator</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary border-opacity-50 text-warning">
+                                        <i class="bi bi-person-badge"></i>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        class="form-control form-control-industrial mono-text"
+                                        id="username"
+                                        name="username"
+                                        placeholder="Masukkan username..."
+                                        required
+                                        autofocus
+                                    >
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label small fw-semibold text-uppercase text-secondary">Password Override</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary border-opacity-50 text-warning">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </span>
+                                    <input
+                                        type="password"
+                                        class="form-control form-control-industrial mono-text"
+                                        id="password"
+                                        name="password"
+                                        placeholder="Masukkan password..."
+                                        required
+                                    >
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-industrial-warning w-100 py-2">
+                                <i class="bi bi-unlock-fill me-2"></i>Aktifkan SCADA Override
+                            </button>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-top border-secondary border-opacity-25 justify-content-between small text-secondary mono-text">
+                        <span>CONTROLLER: SIMATIC-S7-1500</span>
+                        <span>MODE: LOCAL-AUTH</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Unlocked SCADA Dashboard -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+                <h1 class="h4 fw-bold text-white mb-1">
+                    <i class="bi bi-speedometer2 text-info me-2"></i>Dashboard Telemetri &amp; Kendali SCADA
+                </h1>
+                <div class="small text-secondary mono-text">
+                    CONTROLLER: {{ telemetry.plc_controller }} &bull; STATUS: <span class="text-success fw-semibold">OVERRIDE ACTIVE (OPERATOR: ADMIN)</span>
+                </div>
+            </div>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 d-inline-flex align-items-center gap-2 mono-text">
+                <span class="status-dot"></span> REAL-TIME TELEMETRY SYNCED
+            </span>
+        </div>
+
+        <!-- Industrial Telemetry Indicators -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-xl-3">
+                <div class="card-industrial h-100">
+                    <div class="card-industrial-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-thermometer-half text-warning me-1"></i> Suhu Mesin Utama</span>
+                        <span class="mono-text text-warning">TEMP-01</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="gauge-value text-warning mono-text mb-1">{{ telemetry.machine_temp }}</div>
+                        <div class="small text-secondary mb-3">{{ telemetry.machine_temp_status }}</div>
+                        <div class="progress" style="height: 8px; background-color: #1e293b;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 78%;" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card-industrial h-100">
+                    <div class="card-industrial-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-moisture text-info me-1"></i> Tekanan Air Pendingin</span>
+                        <span class="mono-text text-info">PRES-02</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="gauge-value text-info mono-text mb-1">{{ telemetry.water_pressure }}</div>
+                        <div class="small text-secondary mb-3">{{ telemetry.water_pressure_status }}</div>
+                        <div class="progress" style="height: 8px; background-color: #1e293b;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 68%;" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card-industrial h-100">
+                    <div class="card-industrial-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-fan text-success me-1"></i> Putaran Turbin</span>
+                        <span class="mono-text text-success">RPM-03</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="gauge-value text-success mono-text mb-1">{{ telemetry.turbine_rpm }}</div>
+                        <div class="small text-secondary mb-3">BEBAN NOMINAL: 84% KAPASITAS</div>
+                        <div class="progress" style="height: 8px; background-color: #1e293b;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 84%;" aria-valuenow="84" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card-industrial h-100">
+                    <div class="card-industrial-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-broadcast-pin text-light me-1"></i> Jaringan Sensor IIoT</span>
+                        <span class="mono-text text-light">MODBUS</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="h4 fw-bold text-white mono-text mb-2">{{ telemetry.active_sensors }}</div>
+                        <div class="small text-secondary mb-2">Firmware Saat Ini: <span class="text-info mono-text">{{ telemetry.current_firmware }}</span></div>
+                        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 mono-text">0 PACKET LOSS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IoT Sensor Firmware Update Section -->
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card-industrial h-100">
+                    <div class="card-industrial-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-cloud-arrow-up-fill text-info me-2"></i>IoT Sensor Firmware Update</span>
+                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 mono-text">OTA DEPLOYER</span>
+                    </div>
+                    <div class="p-4">
+                        <p class="small text-secondary mb-4">
+                            Utilitas distribusi <em>Over-The-Air (OTA)</em> untuk memperbarui pustaka firmware pada 
+                            seluruh modul sensor suhu dan tekanan di jaringan Modbus-RTU secara serentak.
+                        </p>
+
+                        <form method="POST" action="/scada-panel" autocomplete="off">
+                            <input type="hidden" name="action" value="firmware_update">
+                            <div class="mb-3">
+                                <label for="firmware_version" class="form-label small fw-semibold text-uppercase text-secondary">
+                                    Firmware Version
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary border-opacity-50 text-info mono-text">
+                                        fw-pkg://
+                                    </span>
+                                    <input
+                                        type="text"
+                                        class="form-control form-control-industrial mono-text py-2"
+                                        id="firmware_version"
+                                        name="firmware_version"
+                                        value="{{ firmware_version_input }}"
+                                        placeholder="Contoh: v2.1"
+                                        required
+                                    >
+                                    <button type="submit" class="btn btn-industrial-primary px-4">
+                                        <i class="bi bi-send-check-fill me-2"></i>Deploy Firmware
+                                    </button>
+                                </div>
+                                <div class="form-text text-secondary small mt-2">
+                                    Masukkan tag versi rilis resmi (misal: <code class="text-info">v2.1</code>) untuk memulai kompilasi dan unggah ke node sensor.
+                                </div>
+                            </div>
+                        </form>
+
+                        {% if firmware_result %}
+                            {% if firmware_result.status == 'success' %}
+                            <div class="alert alert-success bg-success bg-opacity-10 border-success border-opacity-50 text-success mt-4 mb-0 d-flex align-items-center gap-2 mono-text" role="alert">
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                                <span class="fw-semibold">{{ firmware_result.message }}</span>
+                            </div>
+                            {% elif firmware_result.status == 'compromised' %}
+                            <div class="mt-4">
+                                <div class="small text-uppercase text-secondary fw-bold mb-2 mono-text">
+                                    <i class="bi bi-terminal-fill text-success me-1"></i> Output Konsol Sistem Gateway:
+                                </div>
+                                <div class="terminal-box">{{ firmware_result.terminal_output }}</div>
+                            </div>
+                            {% elif firmware_result.status == 'error' %}
+                            <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-50 text-warning mt-4 mb-0 small" role="alert">
+                                <i class="bi bi-exclamation-circle me-1"></i> {{ firmware_result.message }}
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card-industrial h-100">
+                    <div class="card-industrial-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-journal-code text-secondary me-2"></i>Log Aktivitas Bus Industri</span>
+                        <span class="mono-text text-secondary">CHANNEL #01</span>
+                    </div>
+                    <div class="p-4">
+                        <ul class="list-unstyled mono-text small text-secondary mb-0 d-flex flex-column gap-3">
+                            <li class="border-bottom border-secondary border-opacity-25 pb-2">
+                                <span class="text-info">[SYS-INIT]</span> Koneksi Modbus-TCP Master #01 terverifikasi pada port 502.
+                            </li>
+                            <li class="border-bottom border-secondary border-opacity-25 pb-2">
+                                <span class="text-success">[SENSOR-OK]</span> Kalibrasi sensor tekanan hidrolik PRES-02 selesai (4.85 Bar).
+                            </li>
+                            <li class="border-bottom border-secondary border-opacity-25 pb-2">
+                                <span class="text-warning">[THERMAL]</span> Suhu boiler utama stabil pada 78.4 &deg;C (batas peringatan: 95.0 &deg;C).
+                            </li>
+                            <li>
+                                <span class="text-info">[OTA-AGENT]</span> Daemon <code class="text-light">/usr/sbin/fw-updater</code> siap menerima parameter versi rilis.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer class="py-3 border-top border-secondary border-opacity-25 text-center small text-secondary mt-auto">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <span>&copy; 2026 PT Industri Otomasi Sejahtera &mdash; SCADA &amp; Industrial Control System Division</span>
+            <span class="mono-text">PLANT: CIKAMPEK-01</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
